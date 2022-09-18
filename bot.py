@@ -1,5 +1,4 @@
 import os
-from pydoc import describe
 import discord
 from discord.ext import commands
 import pymongo
