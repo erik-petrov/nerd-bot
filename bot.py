@@ -2,6 +2,8 @@ import os
 import discord
 
 TOKEN = os.getenv('NERD_BOT')
+password = str(os.environ.get("password"))
+
 nerds = [465770139501985812, 291477074236014593]
 
 intents = discord.Intents.default()
