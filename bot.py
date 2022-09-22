@@ -118,5 +118,8 @@ async def listNerdEmojis(ctx, chel: discord.Member):
     emojis = ""
     for x in nerd["emojis"]:
         emojis += x
-    await ctx.send(emojis)
+    if len(emojis) == 0:
+        await ctx.send("No emojis")
+    else:
+        await ctx.send(emojis)
 bot.run(TOKEN)
