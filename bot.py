@@ -1,5 +1,8 @@
+from http.client import FORBIDDEN
+from nis import cat
 import os
 from pkgutil import extend_path
+from queue import Empty
 import discord
 from discord.ext import commands
 import pymongo
@@ -29,12 +32,30 @@ async def on_ready():
 async def on_message(msg):
     if msg.author == bot.user:
         return
-    if nerds.find_one({"discordID": msg.author.id}) != None:
-        await msg.add_reaction("🤓")
+    nerd = nerds.find_one({"discordID": msg.author.id})
+    if nerd != None:
+        if len(nerd["emoji"]) != 0:
+             for x in nerd["emoji"]:
+                try:
+                    if type(x) == str:
+                        await msg.add_reaction(x)
+                    elif type(x) == discord.Emoji:
+                        if x.is_usable():
+                            await msg.add_reaction(str(x))
+                except discord.HTTPException:
+                    print("Adding the reaction failed.")
+                except discord.Forbidden:
+                    print("You do not have the proper permissions to react to the message.")
+                except discord.NotFound:
+                    print("The emoji you specified was not found.")
+                except discord.TypeError:
+                    print("The emoji parameter is invalid.")
+        else:
+            await msg.add_reaction("🤓")
     await bot.process_commands(msg)
 
 @bot.command(name="addNerd", description="Adds a nerd. Use the nerd's ID.")
-async def addNerd(ctx, chel: discord.Member):
+async def addNerd(ctx, chel: discord.Member, *emoji):
     if ctx.author.id not in admins:
         return
     nerd = nerds.find_one({"discordID": chel.id})
@@ -42,9 +63,12 @@ async def addNerd(ctx, chel: discord.Member):
         if nerd.discordID == chel.id:
             await ctx.send("already in db")
             return
+    if len(emoji) == 0:
+        emoji = ["🤓"]
     newNerd = {
         "discordID": chel.id,
-        "name": chel.name
+        "name": chel.name,
+        "emoji": emoji,
     }
     nerds.insert_one(newNerd)
     await ctx.send("successfully added")
