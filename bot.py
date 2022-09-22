@@ -55,7 +55,7 @@ async def on_message(msg):
     await bot.process_commands(msg)
 
 @bot.command(name="addNerd", description="Adds a nerd. Use the nerd's ID.")
-async def addNerd(ctx, chel: discord.Member, *emoji):
+async def addNerd(ctx, chel: discord.Member, *emojis):
     if ctx.author.id not in admins:
         return
     nerd = nerds.find_one({"discordID": chel.id})
@@ -63,12 +63,12 @@ async def addNerd(ctx, chel: discord.Member, *emoji):
         if nerd.discordID == chel.id:
             await ctx.send("already in db")
             return
-    if len(emoji) == 0:
-        emoji = ["🤓"]
+    if len(emojis) == 0:
+        emojis = ["🤓"]
     newNerd = {
         "discordID": chel.id,
         "name": chel.name,
-        "emoji": emoji,
+        "emoji": emojis,
     }
     nerds.insert_one(newNerd)
     await ctx.send("successfully added")
@@ -93,5 +93,17 @@ async def listNerds(ctx):
     if(len(names) == 0):
         names = "No nerds found."
     await ctx.send(names)
+
+@bot.command(name="editEmoji")
+async def editEmoji(ctx, chel: discord.Member, *emojis):
+    if ctx.author.id not in admins:
+        return
+    nerd = nerds.find_one({"discordID": chel.id})
+    if nerd == None:
+        await ctx.send("not in db")
+        return
+    if len(emojis) == 0:
+        emojis = ["🤓"]
+    nerds.update_one({"_id":nerd["_id"]}, {"$set": {"emoji": emojis}}, upsert=False)
 
 bot.run(TOKEN)
