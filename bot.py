@@ -1,7 +1,9 @@
 import os
+from pkgutil import extend_path
 import discord
 from discord.ext import commands
 import pymongo
+import logging
 
 TOKEN = str(os.getenv('NERD_BOT'))
 password = str(os.environ.get("password"))
@@ -10,47 +12,62 @@ admins = [291477074236014593]
 client = pymongo.MongoClient("mongodb+srv://koteman123:"+password+"@cluster0.83jlpjn.mongodb.net/?retryWrites=true&w=majority")
 mydb = client["nerd-bot"]
 nerds = mydb["nerds"]
-extreme = False
+extremeBool = False
 
-
+discord.utils.setup_logging(level=logging.NOTSET, root=False)
 intents = discord.Intents.default()
 intents.message_content = True
 
-bot = commands.Bot(command_prefix='/', intents=intents)
+bot = commands.Bot(command_prefix='<', intents=intents)
+
+@bot.event
+async def on_ready():
+    print(f'Logged in as {bot.user} (ID: {bot.user.id})')
+    print('------')
 
 @bot.event
 async def on_message(msg):
-    if msg.author == client.user:
+    if msg.author == bot.user:
         return
     if nerds.find_one({"discordID": msg.author.id}) != None:
-        if(extreme): await msg.reply("🤓")
         await msg.add_reaction("🤓")
-#You must have access to the message_content intent for the commands extension to function. This must be set both in the developer portal and within your code.
+    await bot.process_commands(msg)
+
 @bot.command(name="addNerd", description="Adds a nerd. Use the nerd's ID.")
-async def addNerd(ctx, nerdId):
-    if not nerdId.isnumeric():
-        return
+async def addNerd(ctx, chel: discord.Member):
     if ctx.author.id not in admins:
         return
-    if nerds.find_one({"discordID": ctx.author.id}) != None:
-        if x.discordID == nerdId:
-            ctx.send("already in db")
+    nerd = nerds.find_one({"discordID": chel.id})
+    if nerd != None:
+        if nerd.discordID == chel.id:
+            await ctx.send("already in db")
             return
     newNerd = {
-        "discordID": nerdId
+        "discordID": chel.id,
+        "name": chel.name
     }
     nerds.insert_one(newNerd)
-    ctx.send("successfully added")
+    await ctx.send("successfully added")
         
-@bot.command(name="extreme", description="Chaos.")
-async def extreme(ctx):
+@bot.command(name="removeNerd", description="amogus")
+async def removeNerd(ctx, chel: discord.Member):
     if ctx.author.id not in admins:
         return
-    extreme = not extreme
-    if extreme:
-        ctx.send("Chaos mode active.")
-    else:
-        ctx.send("Chaos averted.")
-    
+    nerd = nerds.find_one({"discordID": chel.id})
+    if nerd == None:
+        await ctx.send("not in db")
+        return
+    nerds.delete_one({"discordID": chel.id})
+    await ctx.send("successfully deleted")
+
+@bot.command(name="listNerds", description="lists nerds")
+async def listNerds(ctx):
+    names=""
+    for x in nerds.find():
+            names += x["name"] + ", "
+    names = names[:len(names) - 2]
+    if(len(names) == 0):
+        names = "No nerds found."
+    await ctx.send(names)
 
 bot.run(TOKEN)
