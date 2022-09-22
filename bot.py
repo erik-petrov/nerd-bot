@@ -1,3 +1,4 @@
+from dis import disco
 from http.client import FORBIDDEN
 from nis import cat
 import os
@@ -106,4 +107,16 @@ async def editEmoji(ctx, chel: discord.Member, *emojis):
         emojis = ["🤓"]
     nerds.update_one({"_id":nerd["_id"]}, {"$set": {"emoji": emojis}}, upsert=False)
 
+@bot.command(name="listNerdEmojis")
+async def listNerdEmojis(ctx, chel: discord.Member):
+    if ctx.author.id not in admins:
+        return
+    nerd = nerds.find_one({"discordID": chel.id})
+    if nerd == None:
+        await ctx.send("not in db")
+        return
+    emojis = ""
+    for x in nerd["emojis"]:
+        emojis += x
+    await ctx.send(emojis)
 bot.run(TOKEN)
