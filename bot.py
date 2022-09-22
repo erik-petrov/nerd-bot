@@ -116,7 +116,7 @@ async def listNerdEmojis(ctx, chel: discord.Member):
         await ctx.send("not in db")
         return
     emojis = ""
-    for x in nerd["emojis"]:
+    for x in nerd["emoji"]:
         emojis += x
     if len(emojis) == 0:
         await ctx.send("No emojis")
