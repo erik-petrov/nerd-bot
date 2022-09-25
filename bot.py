@@ -106,6 +106,7 @@ async def editEmoji(ctx, chel: discord.Member, *emojis):
     if len(emojis) == 0:
         emojis = ["🤓"]
     nerds.update_one({"_id":nerd["_id"]}, {"$set": {"emoji": emojis}}, upsert=False)
+    ctx.send("success")
 
 @bot.command(name="listNerdEmojis")
 async def listNerdEmojis(ctx, chel: discord.Member):
